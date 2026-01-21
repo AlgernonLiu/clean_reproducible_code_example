@@ -9,23 +9,29 @@ from sklearn.model_selection import train_test_split
 from joblib import dump
 import matplotlib.pyplot as plt
 import seaborn as sns
+### ---- 1. Setting ---- ###
+# Modification1: change the logic of setting output directory
+output_dirs = [
+    "./outputs/",
+    "./outputs/data",
+    "./outputs/graphics",
+    "./outputs/models"
+]
 
-output_path = "./outputs/"
-output_path_data = "./outputs/data"
-output_path_graphics = "./outputs/graphics"
-output_path_models = "./outputs/models"
-list_paths = [output_path, output_path_data, output_path_graphics, output_path_models]
-for outputs in list_paths:
-    if os.path.isdir(outputs):
-        print(f"{outputs} exists.")
-    else:
-        print(f"{outputs} does not exist, creating it.")
-        os.makedirs(outputs)
+# Use exist_ok=True to avoid if/else checks
+for path in output_dirs:
+    os.makedirs(path, exist_ok=True)
+        
+        
 np.random.seed(42)
 torch.manual_seed(42)
+
+### ----2.Data generation---- ###
 data = np.random.randn(2000, 100)
 data.shape
 np.save("./outputs/data/raw_data_sim.npy", data)
+
+# Visualization of generated data
 fig, axes = plt.subplots(5, 1, sharex=True, figsize=(16, 10))
 for sample, ax in zip(np.arange(5), axes.flat):
     sns.heatmap(
@@ -42,7 +48,7 @@ data_train, data_test = train_test_split(data, test_size=0.2, random_state=42)
 data_train_torch = torch.from_numpy(data_train).float()
 data_test_torch = torch.from_numpy(data_test).float()
 
-
+### ----3. model setting---- ###
 class Encoder(nn.Module):
     def __init__(self, input_dim, hidden_dim, embedding_dim):
         super(Encoder, self).__init__()
@@ -62,7 +68,8 @@ loss_function = nn.MSELoss()
 optimization = optim.SGD(encoder.parameters(), lr=0.001, momentum=0.9)
 losses = []
 representations_during_training = []
-# training of the encoder
+
+### ----4. training the encoder---- ###
 for epoch in range(4000):
     optimization.zero_grad()
     outputs = encoder(data_train_torch)
@@ -78,6 +85,9 @@ for epoch in range(4000):
             representations = encoder(data_train_torch)
             representations_during_training.append(representations.cpu().numpy())
 torch.save(encoder, "./outputs/models/encoder.pth")
+
+
+### ----5. results visualization---- ###
 fig, ax = plt.subplots()
 sns.lineplot(x=range(len(losses)), y=losses, ax=ax)
 sns.despine(offset=10, ax=ax)
@@ -98,6 +108,18 @@ for sample, ax in zip(np.arange(5), axes.flat):
     )
     ax.set_title("Sample %s" % str(sample + 1))
 fig.savefig("./outputs/graphics/data_representations_examples.png")
+
+
+
+
+
+
+
+
+
+
+
+
 dpgmm = BayesianGaussianMixture(
     n_components=10,
     covariance_type="full",
