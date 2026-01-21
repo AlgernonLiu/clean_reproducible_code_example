@@ -4,13 +4,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.mixture import BayesianGaussianMixture
-from sklearn.datasets import make_blobs
+# from sklearn.datasets import make_blobs
 from sklearn.model_selection import train_test_split
 from joblib import dump
 import matplotlib.pyplot as plt
 import seaborn as sns
-### ---- 1. Setting ---- ###
-# Modification1: change the logic of setting output directory
+# ---- 1. Setting ----
+# Change the logic of setting output directory
 output_dirs = [
     "./outputs/",
     "./outputs/data",
@@ -21,14 +21,12 @@ output_dirs = [
 # Use exist_ok=True to avoid if/else checks
 for path in output_dirs:
     os.makedirs(path, exist_ok=True)
-        
-        
 np.random.seed(42)
 torch.manual_seed(42)
 
-### ----2.Data generation---- ###
+# ----2.Data generation----
 data = np.random.randn(2000, 100)
-data.shape
+# data.shape
 np.save("./outputs/data/raw_data_sim.npy", data)
 
 # Visualization of generated data
@@ -44,11 +42,14 @@ for sample, ax in zip(np.arange(5), axes.flat):
     )
     ax.set_title("data sample %s" % str(sample + 1))
 fig.savefig("./outputs/graphics/data_examples.png")
+plt.close() # Close plot
+
 data_train, data_test = train_test_split(data, test_size=0.2, random_state=42)
 data_train_torch = torch.from_numpy(data_train).float()
 data_test_torch = torch.from_numpy(data_test).float()
 
-### ----3. model setting---- ###
+
+# ----3. model setting----
 class Encoder(nn.Module):
     def __init__(self, input_dim, hidden_dim, embedding_dim):
         super(Encoder, self).__init__()
@@ -69,7 +70,7 @@ optimization = optim.SGD(encoder.parameters(), lr=0.001, momentum=0.9)
 losses = []
 representations_during_training = []
 
-### ----4. training the encoder---- ###
+# ----4. training the encoder----
 for epoch in range(4000):
     optimization.zero_grad()
     outputs = encoder(data_train_torch)
@@ -87,7 +88,7 @@ for epoch in range(4000):
 torch.save(encoder, "./outputs/models/encoder.pth")
 
 
-### ----5. results visualization---- ###
+# ----5. results visualization----
 fig, ax = plt.subplots()
 sns.lineplot(x=range(len(losses)), y=losses, ax=ax)
 sns.despine(offset=10, ax=ax)
@@ -95,7 +96,9 @@ plt.title("Loss of Encoder")
 plt.xlabel("Epoch number")
 plt.ylabel("Training loss")
 fig.savefig("./outputs/graphics/loss_training.png")
-representations_training = representations_during_training[3]
+representations_training = representations_during_training[-1]
+# change to last result
+
 fig, axes = plt.subplots(1, 5, sharex=True, figsize=(10, 2))
 for sample, ax in zip(np.arange(5), axes.flat):
     sns.heatmap(
